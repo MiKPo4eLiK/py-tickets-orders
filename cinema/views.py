@@ -146,7 +146,9 @@ class OrderViewSet(
     permission_classes = (IsAuthenticated,)
 
     def get_queryset(self) -> QuerySet:
-        return Order.objects.filter(user=self.request.user).order_by("-created_at")
+        return Order.objects.filter(user=self.request.user).prefetch_related(
+            "tickets__movie_session__cinema_hall", "tickets__movie_session__movie"
+        ).order_by("-created_at")
 
     def get_serializer_class(self) -> object:
         if self.action == "list":
