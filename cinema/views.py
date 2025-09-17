@@ -2,7 +2,6 @@ from django.db.models import F, Count, QuerySet
 from rest_framework import viewsets, mixins
 from rest_framework.permissions import IsAuthenticated
 
-
 from cinema.models import (
     Genre,
     Actor,
@@ -116,7 +115,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     )
     serializer_class = MovieSessionSerializer
 
-    def get_queryset(self) -> queryset:
+    def get_queryset(self) -> QuerySet:
         queryset = self.queryset
         movie_id = self.request.query_params.get("movie")
         date = self.request.query_params.get("date")
@@ -146,7 +145,7 @@ class OrderViewSet(
     serializer_class = OrderSerializer
     permission_classes = (IsAuthenticated,)
 
-    def get_queryset(self) -> str:
+    def get_queryset(self) -> QuerySet:
         return Order.objects.filter(user=self.request.user).order_by("-created_at")
 
     def get_serializer_class(self) -> object:
@@ -155,5 +154,5 @@ class OrderViewSet(
 
         return OrderSerializer
 
-    def perform_create(self, serializer) -> None:
+    def perform_create(self, serializer: OrderSerializer) -> None:
         serializer.save(user=self.request.user)

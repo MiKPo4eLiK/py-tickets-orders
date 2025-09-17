@@ -9,7 +9,7 @@ from cinema.models import (
     Movie,
     MovieSession,
     Order,
-    Ticket
+    Ticket,
 )
 
 
@@ -76,7 +76,7 @@ class MovieSessionListSerializer(MovieSessionSerializer):
 
 
 class TicketSerializer(serializers.ModelSerializer):
-    def validate(self, attrs) -> str:
+    def validate(self, attrs: dict) -> dict:
         data = super(TicketSerializer, self).validate(attrs)
         movie_session = attrs["movie_session"]
 
@@ -132,9 +132,11 @@ class OrderSerializer(serializers.ModelSerializer):
         fields = ("id", "tickets", "created_at")
 
     @transaction.atomic
-    def create(self, validated_data) -> str:
+    def create(self, validated_data: dict) -> Order:
         tickets_data = validated_data.pop("tickets")
-        order = Order.objects.create(**validated_data)
+        user = self.context["request"].user
+
+        order = Order.objects.create(user=user)
         for ticket_data in tickets_data:
             Ticket.objects.create(order=order, **ticket_data)
         return order
