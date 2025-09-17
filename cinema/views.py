@@ -1,6 +1,8 @@
 from django.db.models import F, Count, QuerySet
-from rest_framework import viewsets, mixins
+from rest_framework import viewsets, mixins, status
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 from cinema.models import (
     Genre,
@@ -111,7 +113,8 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                 * F("cinema_hall__rows")
                 - Count("tickets")
             )
-        ).order_by("show_time")
+        )
+        .order_by("show_time")
     )
     serializer_class = MovieSessionSerializer
 
@@ -146,9 +149,13 @@ class OrderViewSet(
     permission_classes = (IsAuthenticated,)
 
     def get_queryset(self) -> QuerySet:
-        return Order.objects.filter(user=self.request.user).prefetch_related(
-            "tickets__movie_session__cinema_hall", "tickets__movie_session__movie"
-        ).order_by("-created_at")
+        return (
+            Order.objects.filter(user=self.request.user)
+            .prefetch_related(
+                "tickets__movie_session__cinema_hall", "tickets__movie_session__movie"
+            )
+            .order_by("-created_at")
+        )
 
     def get_serializer_class(self) -> object:
         if self.action == "list":

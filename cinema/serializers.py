@@ -47,6 +47,19 @@ class MovieDetailSerializer(MovieSerializer):
     actors = ActorSerializer(many=True, read_only=True)
 
 
+class MovieForSessionDetailSerializer(serializers.ModelSerializer):
+    genres = serializers.SlugRelatedField(
+        slug_field="name", many=True, read_only=True
+    )
+    actors = serializers.SlugRelatedField(
+        slug_field="full_name", many=True, read_only=True
+    )
+
+    class Meta:
+        model = Movie
+        fields = ("id", "title", "description", "duration", "genres", "actors")
+
+
 class MovieSessionSerializer(serializers.ModelSerializer):
     class Meta:
         model = MovieSession
@@ -87,24 +100,29 @@ class TicketSerializer(serializers.ModelSerializer):
         movie_session = attrs["movie_session"]
 
         if (
-                attrs["row"] > movie_session.cinema_hall.rows
-                or attrs["row"] < 1
+            attrs["row"] > movie_session.cinema_hall.rows
+            or attrs["row"] < 1
         ):
             raise ValidationError(
                 {"row": "Invalid row number"}
             )
 
         if (
-                attrs["seat"] > movie_session.cinema_hall.seats_in_row
-                or attrs["seat"] < 1
+            attrs["seat"] > movie_session.cinema_hall.seats_in_row
+            or attrs["seat"] < 1
         ):
             raise ValidationError(
                 {"seat": "Invalid seat number"}
             )
 
-        if movie_session.tickets.filter(row=attrs["row"], seat=attrs["seat"]).exists():
+        if movie_session.tickets.filter(
+            row=attrs["row"], seat=attrs["seat"]
+        ).exists():
             raise ValidationError(
-                {"ticket": "This seat and row are already taken for this movie session."}
+                {
+                    "ticket": "This seat and row are already taken for this movie "
+                    "session."
+                }
             )
 
         return data
@@ -115,7 +133,7 @@ class TicketSerializer(serializers.ModelSerializer):
 
 
 class MovieSessionDetailSerializer(MovieSessionSerializer):
-    movie = MovieListSerializer(many=False, read_only=True)
+    movie = MovieForSessionDetailSerializer(many=False, read_only=True)
     cinema_hall = CinemaHallSerializer(many=False, read_only=True)
     taken_places = TakenPlaceSerializer(
         source="tickets", many=True, read_only=True
